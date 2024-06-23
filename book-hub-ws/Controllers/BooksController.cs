@@ -22,7 +22,6 @@ namespace book_hub_ws.Controllers
         [HttpPost("AddBook")]
         public async Task<IActionResult> AddBook([FromBody] BookCreateDto bookDto)
         {
-            // Estrai l'ID utente dal claim del token JWT
             var userId = HttpContext.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
             if (userId == null)
             {
@@ -37,7 +36,6 @@ namespace book_hub_ws.Controllers
                 ISBN = bookDto.ISBN,
                 Description = bookDto.Description,
                 Condition = bookDto.Condition,
-                Available = bookDto.Available,
                 PhotoUrl = bookDto.PhotoUrl,
                 GenreId = bookDto.GenreId,
                 UserId = int.Parse(userId)
@@ -55,7 +53,6 @@ namespace book_hub_ws.Controllers
                 ISBN = book.ISBN,
                 Description = book.Description,
                 Condition = book.Condition,
-                Available = book.Available,
                 PhotoUrl = book.PhotoUrl,
                 GenreId = book.GenreId,
                 GenreName = (await _context.Genres.FindAsync(book.GenreId)).Name,

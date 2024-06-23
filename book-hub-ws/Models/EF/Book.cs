@@ -16,7 +16,6 @@ namespace book_hub_ws.Models.EF
         public string ISBN { get; set; }  
         public string Description { get; set; }  
         public string Condition { get; set; } 
-        public bool Available { get; set; } 
         public string PhotoUrl { get; set; } 
 
         public int GenreId { get; set; }
@@ -37,10 +36,10 @@ namespace book_hub_ws.Models.EF
         public string ISBN { get; set; }
         public string Description { get; set; }
         public string Condition { get; set; }
-        public bool Available { get; set; }
         public string PhotoUrl { get; set; }
         public int GenreId { get; set; }
         public string GenreName { get; set; }
+        public string Status { get; set; } 
         public int UserId { get; set; }
     }
 

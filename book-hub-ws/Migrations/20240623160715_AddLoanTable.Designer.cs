@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using book_hub_ws.DAL;
@@ -11,9 +12,11 @@ using book_hub_ws.DAL;
 namespace book_hub_ws.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20240623160715_AddLoanTable")]
+    partial class AddLoanTable
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -33,6 +36,9 @@ namespace book_hub_ws.Migrations
                     b.Property<string>("Author")
                         .IsRequired()
                         .HasColumnType("text");
+
+                    b.Property<bool>("Available")
+                        .HasColumnType("boolean");
 
                     b.Property<string>("Condition")
                         .IsRequired()
@@ -100,25 +106,18 @@ namespace book_hub_ws.Migrations
                     b.Property<int>("BookId")
                         .HasColumnType("integer");
 
-                    b.Property<int?>("BorrowerUserId")
-                        .HasColumnType("integer");
-
                     b.Property<string>("LoanType")
                         .IsRequired()
                         .HasColumnType("text");
 
-                    b.Property<string>("SpecificBookTitle")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<DateTime?>("StartDate")
-                        .HasColumnType("timestamp with time zone");
+                    b.Property<int?>("SpecificBookId")
+                        .HasColumnType("integer");
 
                     b.HasKey("Id");
 
                     b.HasIndex("BookId");
 
-                    b.HasIndex("BorrowerUserId");
+                    b.HasIndex("SpecificBookId");
 
                     b.ToTable("Loans");
                 });
@@ -190,13 +189,14 @@ namespace book_hub_ws.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("book_hub_ws.Models.EF.User", "BorrowerUser")
+                    b.HasOne("book_hub_ws.Models.EF.Book", "SpecificBook")
                         .WithMany()
-                        .HasForeignKey("BorrowerUserId");
+                        .HasForeignKey("SpecificBookId")
+                        .OnDelete(DeleteBehavior.Restrict);
 
                     b.Navigation("Book");
 
-                    b.Navigation("BorrowerUser");
+                    b.Navigation("SpecificBook");
                 });
 
             modelBuilder.Entity("book_hub_ws.Models.EF.Genre", b =>

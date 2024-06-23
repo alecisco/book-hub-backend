@@ -8,7 +8,7 @@ namespace book_hub_ws.Controllers
 {
     [ApiController]
     [Route("[controller]")]
-    [Authorize] 
+    [Authorize]
     public class HomeController : ControllerBase
     {
         private readonly AppDbContext _context;
@@ -20,7 +20,6 @@ namespace book_hub_ws.Controllers
         [HttpGet("getHomeData")]
         public async Task<IActionResult> GetHomeData()
         {
-
             var userId = HttpContext.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
             if (userId == null)
             {
@@ -34,18 +33,20 @@ namespace book_hub_ws.Controllers
                                          u.UserId,
                                          u.Name,
                                          u.Email,
-                                         Books = u.Books.OrderBy(b => b.BookId).Take(20).Select(b => new
+                                         Books = u.Books.Select(b => new
                                          {
                                              b.BookId,
                                              b.Title,
                                              b.Author,
                                              b.PublicationYear,
-                                             b.Genre.Name,  
+                                             GenreName = b.Genre.Name,
                                              b.PhotoUrl,
                                              b.ISBN,
                                              b.Description,
                                              b.Condition,
-                                             b.Available
+                                             Status = _context.Loans.Where(l => l.BookId == b.BookId)
+                                                                     .Select(l => l.BorrowerUserId.HasValue ? "prestato" : "disponibile per il prestito")
+                                                                     .FirstOrDefault() ?? "in libreria"
                                          })
                                      })
                                      .FirstOrDefaultAsync();
@@ -59,5 +60,6 @@ namespace book_hub_ws.Controllers
 
             return Ok(responseData);
         }
+
     }
 }
