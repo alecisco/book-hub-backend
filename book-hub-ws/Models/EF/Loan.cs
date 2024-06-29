@@ -15,12 +15,8 @@ namespace book_hub_ws.Models.EF
         [Required]
         public string LoanType { get; set; }
 
-        public string SpecificBookTitle { get; set; }
+        public string? SpecificBookTitle { get; set; }
 
-        public int? BorrowerUserId { get; set; }
-        public User BorrowerUser { get; set; }
-
-        public DateTime? StartDate { get; set; }
     }
 
     public class LoanDto
@@ -28,9 +24,7 @@ namespace book_hub_ws.Models.EF
         public int Id { get; set; }
         public int BookId { get; set; }
         public string LoanType { get; set; }
-        public string SpecificBookTitle { get; set; }
-        public int? BorrowerUserId { get; set; } 
-        public DateTime? StartDate { get; set; }
+        public string? SpecificBookTitle { get; set; }
     }
 
     public class LoanCreateDto

@@ -14,6 +14,8 @@ namespace book_hub_ws.DAL
         public DbSet<Genre> Genres { get; set; }
         public DbSet<Loan> Loans { get; set; }
 
+        public DbSet<LoanRequest> LoanRequests { get; set; }
+
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);

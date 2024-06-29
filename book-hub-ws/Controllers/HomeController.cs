@@ -27,29 +27,30 @@ namespace book_hub_ws.Controllers
             }
 
             var user = await _context.Users
-                                     .Where(u => u.UserId.ToString() == userId)
-                                     .Select(u => new
-                                     {
-                                         u.UserId,
-                                         u.Name,
-                                         u.Email,
-                                         Books = u.Books.Select(b => new
+                                         .Where(u => u.UserId.ToString() == userId)
+                                         .Select(u => new
                                          {
-                                             b.BookId,
-                                             b.Title,
-                                             b.Author,
-                                             b.PublicationYear,
-                                             GenreName = b.Genre.Name,
-                                             b.PhotoUrl,
-                                             b.ISBN,
-                                             b.Description,
-                                             b.Condition,
-                                             Status = _context.Loans.Where(l => l.BookId == b.BookId)
-                                                                     .Select(l => l.BorrowerUserId.HasValue ? "prestato" : "disponibile per il prestito")
-                                                                     .FirstOrDefault() ?? "in libreria"
+                                             u.UserId,
+                                             u.Name,
+                                             u.Email,
+                                             Books = u.Books.Select(b => new
+                                             {
+                                                 b.BookId,
+                                                 b.Title,
+                                                 b.Author,
+                                                 b.PublicationYear,
+                                                 GenreName = b.Genre.Name,
+                                                 b.PhotoUrl,
+                                                 b.ISBN,
+                                                 b.Description,
+                                                 b.Condition,
+                                                 Status = _context.LoanRequests
+                                                    .Where(lr => lr.BookId == b.BookId && lr.Status == "accepted" && lr.EndDate == null)
+                                                    .Select(lr => "prestato")
+                                                    .FirstOrDefault() ?? "in libreria"
+                                             })
                                          })
-                                     })
-                                     .FirstOrDefaultAsync();
+                                         .FirstOrDefaultAsync();
 
             if (user == null)
             {
