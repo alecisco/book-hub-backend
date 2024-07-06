@@ -41,6 +41,8 @@ namespace book_hub_ws.Models.EF
         public string GenreName { get; set; }
         public string Status { get; set; } 
         public int UserId { get; set; }
+
+        public int? LoanRequestId { get; set; }
     }
 
     public class BookCreateDto

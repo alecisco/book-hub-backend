@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using book_hub_ws.DAL;
@@ -11,9 +12,11 @@ using book_hub_ws.DAL;
 namespace book_hub_ws.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20240706123304_AddReviewTable2")]
+    partial class AddReviewTable2
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -138,9 +141,6 @@ namespace book_hub_ws.Migrations
                     b.Property<int>("RequesterUserId")
                         .HasColumnType("integer");
 
-                    b.Property<int?>("SpecificBookId")
-                        .HasColumnType("integer");
-
                     b.Property<string>("Status")
                         .IsRequired()
                         .HasColumnType("text");
@@ -150,8 +150,6 @@ namespace book_hub_ws.Migrations
                     b.HasIndex("BookId");
 
                     b.HasIndex("RequesterUserId");
-
-                    b.HasIndex("SpecificBookId");
 
                     b.ToTable("LoanRequests");
                 });
@@ -272,15 +270,9 @@ namespace book_hub_ws.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("book_hub_ws.Models.EF.Book", "SpecificBook")
-                        .WithMany()
-                        .HasForeignKey("SpecificBookId");
-
                     b.Navigation("Book");
 
                     b.Navigation("RequesterUser");
-
-                    b.Navigation("SpecificBook");
                 });
 
             modelBuilder.Entity("book_hub_ws.Models.EF.Review", b =>

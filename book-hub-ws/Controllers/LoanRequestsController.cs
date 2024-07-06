@@ -19,8 +19,8 @@ namespace book_hub_ws.Controllers
             _context = context;
         }
 
-        [HttpPost]
-        public async Task<ActionResult<LoanRequestDto>> CreateLoanRequest(CreateLoanRequestDto dto)
+        [HttpPost("createLoanRequest")]
+        public async Task<ActionResult<LoanRequestDto>> CreateLoanRequest([FromBody] CreateLoanRequestDto createLoanRequestDto)
         {
             var userId = HttpContext.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
             if (userId == null)
@@ -30,30 +30,35 @@ namespace book_hub_ws.Controllers
 
             var loanRequest = new LoanRequest
             {
-                BookId = dto.BookId,
+                BookId = createLoanRequestDto.BookId,
                 RequesterUserId = int.Parse(userId),
-                Message = dto.Message,
+                Message = createLoanRequestDto.Message,
                 RequestDate = DateTime.UtcNow,
-                Status = "pending"
+                Status = "pending",
+                SpecificBookId = createLoanRequestDto.SpecificBookId
             };
 
             _context.LoanRequests.Add(loanRequest);
             await _context.SaveChangesAsync();
 
-            var result = new LoanRequestDto
+            var book = await _context.Books
+                .Include(b => b.Genre)
+                .FirstOrDefaultAsync(b => b.BookId == createLoanRequestDto.BookId);
+
+            return Ok(new LoanRequestDto
             {
                 Id = loanRequest.Id,
                 BookId = loanRequest.BookId,
-                BookTitle = _context.Books.FirstOrDefault(b => b.BookId == dto.BookId)?.Title,
+                BookTitle = book.Title,
                 RequesterUserId = loanRequest.RequesterUserId,
-                RequesterUserName = _context.Users.FirstOrDefault(u => u.UserId == loanRequest.RequesterUserId)?.Name,
                 Message = loanRequest.Message,
                 RequestDate = loanRequest.RequestDate,
-                Status = loanRequest.Status
-            };
-
-            return Ok(result);
+                Status = loanRequest.Status,
+                SpecificBookId = loanRequest.SpecificBookId,
+                SpecificBookTitle = loanRequest.SpecificBookId.HasValue ? _context.Books.Find(loanRequest.SpecificBookId.Value)?.Title : null
+            });
         }
+
 
         [HttpGet]
         public async Task<ActionResult<IEnumerable<LoanRequestDto>>> GetLoanRequests()
@@ -75,27 +80,74 @@ namespace book_hub_ws.Controllers
                     RequesterUserName = lr.RequesterUser.Name,
                     Message = lr.Message,
                     RequestDate = lr.RequestDate,
-                    Status = lr.Status
+                    Status = lr.Status,
+                    SpecificBookId = lr.SpecificBookId,
+                    SpecificBookTitle = lr.SpecificBook != null ? lr.SpecificBook.Title : null
                 })
                 .ToListAsync();
 
             return Ok(loanRequests);
         }
 
+
         [HttpPut("{id}/accept")]
         public async Task<IActionResult> AcceptLoanRequest(int id)
         {
-            var loanRequest = await _context.LoanRequests.FindAsync(id);
+            var userId = HttpContext.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+            if (userId == null)
+            {
+                return Unauthorized("User ID not found in token");
+            }
+
+            var loanRequest = await _context.LoanRequests
+                .Include(lr => lr.Book)
+                .Include(lr => lr.RequesterUser)
+                .Include(lr => lr.SpecificBook)
+                .FirstOrDefaultAsync(lr => lr.Id == id);
+
             if (loanRequest == null)
             {
                 return NotFound("Loan request not found");
             }
 
+            if (loanRequest.Book.UserId.ToString() != userId)
+            {
+                return Forbid("You are not authorized to accept this loan request");
+            }
+
             loanRequest.Status = "accepted";
+            loanRequest.EndDate = null;
+
+
+            if (loanRequest.SpecificBookId.HasValue)
+            {
+
+                var loan = new Loan
+                {
+                    BookId = (int)loanRequest.SpecificBookId,
+                    LoanType = loanRequest.SpecificBookId.HasValue ? "specificBook" : "loanOnly",
+                    SpecificBookTitle = loanRequest.SpecificBookId.HasValue ? loanRequest.SpecificBook.Title : null
+                };
+                _context.Loans.Add(loan);
+
+                var reciprocalLoanRequest = new LoanRequest
+                {
+                    BookId = loanRequest.SpecificBookId.Value,
+                    RequesterUserId = loanRequest.Book.UserId,
+                    Status = "accepted",
+                    RequestDate = DateTime.UtcNow,
+                    Message = "Reciprocal loan for " + loanRequest.Book.Title,
+                    SpecificBookId = loanRequest.BookId,
+                };
+                _context.LoanRequests.Add(reciprocalLoanRequest);
+            }
+
             await _context.SaveChangesAsync();
 
-            return NoContent();
+            return Ok();
         }
+
+
 
         [HttpPut("{id}/reject")]
         public async Task<IActionResult> RejectLoanRequest(int id)

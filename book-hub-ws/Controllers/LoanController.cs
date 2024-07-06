@@ -47,7 +47,8 @@ namespace book_hub_ws.Controllers
             var loanedBooks = await _context.Loans
                 .Include(l => l.Book)
                 .ThenInclude(b => b.Genre)
-                .Where(l => l.Book.UserId != int.Parse(userId)) 
+                .Where(l => l.Book.UserId != int.Parse(userId))
+                .Where(l => !_context.LoanRequests.Any(lr => lr.BookId == l.BookId && lr.Status == "accepted" && lr.EndDate == null))
                 .Select(l => new LoanedBookDto
                 {
                     LoanId = l.Id,
@@ -68,6 +69,32 @@ namespace book_hub_ws.Controllers
 
             return Ok(loanedBooks);
         }
+
+
+        [HttpDelete("retractLoan/{bookId}")]
+        public async Task<IActionResult> RetractLoan(int bookId)
+        {
+            var userId = HttpContext.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (userId == null)
+            {
+                return Unauthorized("User ID not found in token");
+            }
+
+            var loan = await _context.Loans
+                                     .Where(l => l.BookId == bookId && l.Book.UserId.ToString() == userId)
+                                     .FirstOrDefaultAsync();
+
+            if (loan == null)
+            {
+                return NotFound("Loan not found or you are not the owner of the book");
+            }
+
+            _context.Loans.Remove(loan);
+            await _context.SaveChangesAsync();
+
+            return Ok();
+        }
+
 
     }
 }

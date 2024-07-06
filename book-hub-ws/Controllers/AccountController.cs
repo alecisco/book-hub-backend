@@ -2,9 +2,11 @@
 using book_hub_ws.Models.EF;
 using book_hub_ws.DAL;
 using book_hub_ws.Utils;
-using Microsoft.AspNetCore.Identity.Data;
 using Microsoft.EntityFrameworkCore;
 using book_hub_ws.Models;
+using Microsoft.AspNetCore.Authorization;
+using System.Security.Claims;
+using Microsoft.AspNetCore.Identity.Data;
 
 namespace book_hub_ws.Controllers
 {
@@ -14,7 +16,6 @@ namespace book_hub_ws.Controllers
     {
         private readonly AppDbContext _context;
         private readonly JwtSettings _jwtSettings;
-
 
         public AccountController(AppDbContext context, JwtSettings jwtSettings)
         {
@@ -61,6 +62,85 @@ namespace book_hub_ws.Controllers
             return Ok(new { Token = jwt });
         }
 
+        [HttpGet("profile")]
+        [Authorize]
+        public async Task<IActionResult> GetProfile()
+        {
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            var user = await _context.Users.FindAsync(int.Parse(userId));
 
+            if (user == null)
+            {
+                return NotFound("User not found");
+            }
+
+            var profile = new ProfileUpdateRequest
+            {
+                Nickname = user.Nickname,
+                Name = user.Name,
+                Surname = user.Surname,
+                Email = user.Email,
+                PhoneNumber = user.PhoneNumber,
+                Community = user.Community
+            };
+
+            return Ok(profile);
+        }
+
+        [HttpPut("profile")]
+        [Authorize]
+        public async Task<IActionResult> UpdateProfile([FromBody] ProfileUpdateRequest request)
+        {
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            var user = await _context.Users.FindAsync(int.Parse(userId));
+
+            if (user == null)
+            {
+                return NotFound("User not found");
+            }
+
+            user.Nickname = request.Nickname;
+            user.Name = request.Name;
+            user.Surname = request.Surname;
+            user.Email = request.Email;
+            user.PhoneNumber = request.PhoneNumber;
+            user.Community = request.Community;
+
+            _context.Users.Update(user);
+            await _context.SaveChangesAsync();
+
+            return NoContent();
+        }
+
+        [HttpPut("change-password")]
+        [Authorize]
+        public async Task<IActionResult> ChangePassword([FromBody] ChangePasswordRequest request)
+        {
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            var user = await _context.Users.FindAsync(int.Parse(userId));
+
+            if (user == null)
+            {
+                return NotFound("User not found");
+            }
+
+            if (!CryptoUtils.VerifyPassword(request.OldPassword, user.PasswordHash))
+            {
+                return BadRequest("Old password is incorrect");
+            }
+
+            user.PasswordHash = CryptoUtils.HashPassword(request.NewPassword);
+
+            _context.Users.Update(user);
+            await _context.SaveChangesAsync();
+
+            return NoContent();
+        }
     }
 }
