@@ -50,6 +50,26 @@ namespace book_hub_ws.Models.EF
         public string GenreName { get; set; }
         public string LoanType { get; set; }
         public string? SpecificBookTitle { get; set; }
-    }    
+
+        public bool PendingRequest { get; set; }
+
+        public string LenderNickname { get; set; }
+    }
+
+
+    public class LoanHistoryDto
+    {
+        public int LoanRequestId { get; set; }
+        public int BookId { get; set; }
+        public string BookTitle { get; set; }
+        public string Author { get; set; }
+        public string BorrowerName { get; set; }
+        public string LenderName { get; set; }
+        public DateTime StartDate { get; set; }
+        public DateTime? EndDate { get; set; }
+        public ReviewHistoryDto BorrowerReview { get; set; }
+        public ReviewHistoryDto LenderReview { get; set; }
+
+    }
 
 }

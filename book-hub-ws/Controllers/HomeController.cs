@@ -34,6 +34,7 @@ namespace book_hub_ws.Controllers
                     u.UserId,
                     u.Name,
                     u.Email,
+                    u.Nickname,
                     Books = u.Books
                         .Select(b => new
                         {

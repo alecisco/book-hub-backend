@@ -29,4 +29,13 @@ namespace book_hub_ws.Models.EF
         public int Rating { get; set; }
         public string? Comment { get; set; }
     }
+
+
+    public class ReviewHistoryDto
+    {
+        public int Rating { get; set; }
+        public string Comment { get; set; }
+    }
+
+
 }

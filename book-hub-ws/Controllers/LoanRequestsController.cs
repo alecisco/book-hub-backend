@@ -163,5 +163,49 @@ namespace book_hub_ws.Controllers
 
             return NoContent();
         }
+
+        [HttpGet("history")]
+        public async Task<ActionResult<IEnumerable<LoanHistoryDto>>> GetLoanHistory()
+        {
+            var userId = HttpContext.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (userId == null)
+            {
+                return Unauthorized("User ID not found in token");
+            }
+
+            var userLoans = await _context.LoanRequests
+                .Include(lr => lr.Book)
+                .Include(lr => lr.RequesterUser)
+                .Where(lr => (lr.Book.UserId.ToString() == userId || lr.RequesterUserId.ToString() == userId) && lr.Status == "concluded")
+                .Select(lr => new LoanHistoryDto
+                {
+                    LoanRequestId = lr.Id,
+                    BookId = lr.BookId,
+                    BookTitle = lr.Book.Title,
+                    Author = lr.Book.Author,
+                    BorrowerName = lr.RequesterUser.Nickname,
+                    LenderName = lr.Book.User.Nickname,
+                    StartDate = lr.RequestDate,
+                    EndDate = lr.EndDate,
+                    BorrowerReview = _context.Reviews
+                        .Where(r => r.LoanRequestId == lr.Id && r.ReviewerId == lr.RequesterUserId)
+                        .Select(r => new ReviewHistoryDto
+                        {
+                            Rating = r.Rating,
+                            Comment = r.Comment
+                        }).FirstOrDefault(),
+                    LenderReview = _context.Reviews
+                        .Where(r => r.LoanRequestId == lr.Id && r.ReviewerId == lr.Book.UserId)
+                        .Select(r => new ReviewHistoryDto
+                        {
+                            Rating = r.Rating,
+                            Comment = r.Comment
+                        }).FirstOrDefault()
+                })
+                .ToListAsync();
+
+            return Ok(userLoans);
+        }
+
     }
 }

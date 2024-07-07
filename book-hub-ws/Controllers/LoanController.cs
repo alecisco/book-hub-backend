@@ -47,6 +47,7 @@ namespace book_hub_ws.Controllers
             var loanedBooks = await _context.Loans
                 .Include(l => l.Book)
                 .ThenInclude(b => b.Genre)
+                .Include(l => l.Book.User) // Include user for nickname
                 .Where(l => l.Book.UserId != int.Parse(userId))
                 .Where(l => !_context.LoanRequests.Any(lr => lr.BookId == l.BookId && lr.Status == "accepted" && lr.EndDate == null))
                 .Select(l => new LoanedBookDto
@@ -63,7 +64,9 @@ namespace book_hub_ws.Controllers
                     GenreId = l.Book.GenreId,
                     GenreName = l.Book.Genre.Name,
                     LoanType = l.LoanType,
-                    SpecificBookTitle = l.SpecificBookTitle
+                    SpecificBookTitle = l.SpecificBookTitle,
+                    PendingRequest = _context.LoanRequests.Any(lr => lr.BookId == l.BookId && lr.Status == "pending" && lr.RequesterUserId == int.Parse(userId)),
+                    LenderNickname = l.Book.User.Nickname 
                 })
                 .ToListAsync();
 
@@ -89,12 +92,17 @@ namespace book_hub_ws.Controllers
                 return NotFound("Loan not found or you are not the owner of the book");
             }
 
+            var loanRequests = await _context.LoanRequests
+                                             .Where(lr => lr.BookId == bookId && lr.Status == "pending")
+                                             .ToListAsync();
+
             _context.Loans.Remove(loan);
+            _context.LoanRequests.RemoveRange(loanRequests);
+
             await _context.SaveChangesAsync();
 
             return Ok();
         }
-
 
     }
 }

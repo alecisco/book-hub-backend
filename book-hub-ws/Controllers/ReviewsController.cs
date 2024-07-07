@@ -84,6 +84,35 @@ namespace book_hub_ws.Controllers
             return Ok();
         }
 
+        [HttpPost("review")]
+        public async Task<IActionResult> SubmitReview([FromBody] ReviewDto reviewDto)
+        {
+            var userId = HttpContext.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (userId == null)
+            {
+                return Unauthorized("User ID not found in token");
+            }
+
+            if (reviewDto.ReviewerId.ToString() != userId)
+            {
+                return Forbid("You are not authorized to submit this review");
+            }
+
+            var review = new Review
+            {
+                LoanRequestId = reviewDto.LoanRequestId,
+                ReviewerId = reviewDto.ReviewerId,
+                Rating = reviewDto.Rating,
+                Comment = reviewDto.Comment
+            };
+
+            _context.Reviews.Add(review);
+            await _context.SaveChangesAsync();
+
+            return Ok();
+        }
+
+
 
     }
 }
