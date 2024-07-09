@@ -47,7 +47,7 @@ namespace book_hub_ws.Controllers
             var loanedBooks = await _context.Loans
                 .Include(l => l.Book)
                 .ThenInclude(b => b.Genre)
-                .Include(l => l.Book.User) // Include user for nickname
+                .Include(l => l.Book.User) 
                 .Where(l => l.Book.UserId != int.Parse(userId))
                 .Where(l => !_context.LoanRequests.Any(lr => lr.BookId == l.BookId && lr.Status == "accepted" && lr.EndDate == null))
                 .Select(l => new LoanedBookDto

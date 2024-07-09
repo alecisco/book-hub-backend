@@ -1,4 +1,5 @@
 ﻿using System.ComponentModel.DataAnnotations;
+using System.Text.Json.Serialization;
 
 namespace book_hub_ws.Models.EF
 {
@@ -14,6 +15,16 @@ namespace book_hub_ws.Models.EF
         public string? Community { get; set; }
 
         public ICollection<Book> Books { get; set; }
+
+        [JsonIgnore]
+
+        public ICollection<Conversation> InitiatedConversations { get; set; }
+
+        [JsonIgnore]
+
+        public ICollection<Conversation> ReceivedConversations { get; set; }
+
+        public ICollection<UserGenre> UserGenres { get; set; }
     }
 
 
@@ -30,6 +41,15 @@ namespace book_hub_ws.Models.EF
         [Required]
         public string PhoneNumber { get; set; }
         public string Community { get; set; }
+    }
+
+    public class UserGenre
+    {
+        public int UserId { get; set; }
+        public User User { get; set; }
+
+        public int GenreId { get; set; }
+        public Genre Genre { get; set; }
     }
 
     public class ChangePasswordRequest

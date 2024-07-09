@@ -61,5 +61,42 @@ namespace book_hub_ws.Controllers
 
             return Ok(bookToReturn);
         }
+
+        [HttpPut("{id}")]
+        public async Task<IActionResult> UpdateBook(int id, [FromBody] BookDto bookDto)
+        {
+            var book = await _context.Books.FindAsync(id);
+            if (book == null)
+            {
+                return NotFound();
+            }
+
+            book.Title = bookDto.Title;
+            book.Author = bookDto.Author;
+            book.PublicationYear = bookDto.PublicationYear;
+            book.GenreId = bookDto.GenreId;
+            book.PhotoUrl = bookDto.PhotoUrl;
+            book.Description = bookDto.Description;
+            book.Condition = bookDto.Condition;
+
+            await _context.SaveChangesAsync();
+
+            return NoContent();
+        }
+
+        [HttpDelete("{id}")]
+        public async Task<IActionResult> DeleteBook(int id)
+        {
+            var book = await _context.Books.FindAsync(id);
+            if (book == null)
+            {
+                return NotFound();
+            }
+
+            _context.Books.Remove(book);
+            await _context.SaveChangesAsync();
+
+            return NoContent();
+        }
     }
 }

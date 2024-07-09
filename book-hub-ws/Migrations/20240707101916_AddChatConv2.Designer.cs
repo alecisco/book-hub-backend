@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using book_hub_ws.DAL;
@@ -11,9 +12,11 @@ using book_hub_ws.DAL;
 namespace book_hub_ws.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20240707101916_AddChatConv2")]
+    partial class AddChatConv2
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -287,21 +290,6 @@ namespace book_hub_ws.Migrations
                     b.ToTable("Users");
                 });
 
-            modelBuilder.Entity("book_hub_ws.Models.EF.UserGenre", b =>
-                {
-                    b.Property<int>("UserId")
-                        .HasColumnType("integer");
-
-                    b.Property<int>("GenreId")
-                        .HasColumnType("integer");
-
-                    b.HasKey("UserId", "GenreId");
-
-                    b.HasIndex("GenreId");
-
-                    b.ToTable("UserGenres");
-                });
-
             modelBuilder.Entity("book_hub_ws.Models.EF.Book", b =>
                 {
                     b.HasOne("book_hub_ws.Models.EF.Genre", "Genre")
@@ -414,25 +402,6 @@ namespace book_hub_ws.Migrations
                     b.Navigation("Reviewer");
                 });
 
-            modelBuilder.Entity("book_hub_ws.Models.EF.UserGenre", b =>
-                {
-                    b.HasOne("book_hub_ws.Models.EF.Genre", "Genre")
-                        .WithMany("UserGenres")
-                        .HasForeignKey("GenreId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("book_hub_ws.Models.EF.User", "User")
-                        .WithMany("UserGenres")
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Genre");
-
-                    b.Navigation("User");
-                });
-
             modelBuilder.Entity("book_hub_ws.Models.EF.Conversation", b =>
                 {
                     b.Navigation("Messages");
@@ -441,8 +410,6 @@ namespace book_hub_ws.Migrations
             modelBuilder.Entity("book_hub_ws.Models.EF.Genre", b =>
                 {
                     b.Navigation("Books");
-
-                    b.Navigation("UserGenres");
                 });
 
             modelBuilder.Entity("book_hub_ws.Models.EF.User", b =>
@@ -452,8 +419,6 @@ namespace book_hub_ws.Migrations
                     b.Navigation("InitiatedConversations");
 
                     b.Navigation("ReceivedConversations");
-
-                    b.Navigation("UserGenres");
                 });
 #pragma warning restore 612, 618
         }

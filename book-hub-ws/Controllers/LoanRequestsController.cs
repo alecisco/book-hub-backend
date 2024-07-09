@@ -77,7 +77,7 @@ namespace book_hub_ws.Controllers
                     BookId = lr.BookId,
                     BookTitle = lr.Book.Title,
                     RequesterUserId = lr.RequesterUserId,
-                    RequesterUserName = lr.RequesterUser.Name,
+                    RequesterUserName = lr.RequesterUser.Nickname,
                     Message = lr.Message,
                     RequestDate = lr.RequestDate,
                     Status = lr.Status,

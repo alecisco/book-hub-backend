@@ -50,7 +50,7 @@ namespace book_hub_ws.Controllers
                             OwnerName = (string?)null,
                             BorrowerName = _context.LoanRequests
                                 .Where(lr => lr.BookId == b.BookId && lr.Status == "accepted" && lr.EndDate == null)
-                                .Select(lr => lr.RequesterUser.Name)
+                                .Select(lr => lr.RequesterUser.Nickname)
                                 .FirstOrDefault(),
                             Status = _context.LoanRequests
                                 .Where(lr => lr.BookId == b.BookId && lr.Status == "accepted" && lr.EndDate == null)
@@ -81,7 +81,7 @@ namespace book_hub_ws.Controllers
                     lr.Book.ISBN,
                     lr.Book.Description,
                     lr.Book.Condition,
-                    OwnerName = lr.Book.User.Name,
+                    OwnerName = lr.Book.User.Nickname,
                     BorrowerName = (string?)null,
                     Status = "prestato",
                     LoanRequestId = lr.Id
@@ -94,6 +94,8 @@ namespace book_hub_ws.Controllers
 
             return Ok(responseData);
         }
+
+
 
     }
 }

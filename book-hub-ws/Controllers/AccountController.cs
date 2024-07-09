@@ -29,6 +29,13 @@ namespace book_hub_ws.Controllers
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
 
+            var existingUser = await _context.Users.FirstOrDefaultAsync(u => u.Nickname == request.Nickname);
+            if (existingUser != null)
+            {
+                ModelState.AddModelError("Nickname", "Nickname già in uso, utilizzare un altro nickname.");
+                return BadRequest(ModelState);
+            }
+
             var user = new User
             {
                 Nickname = request.Nickname,
@@ -43,9 +50,22 @@ namespace book_hub_ws.Controllers
             _context.Users.Add(user);
             await _context.SaveChangesAsync();
 
+            if (request.FavoriteGenres != null && request.FavoriteGenres.Count > 0)
+            {
+                var userGenres = request.FavoriteGenres.Select(genreId => new UserGenre
+                {
+                    UserId = user.UserId,
+                    GenreId = genreId
+                }).ToList();
+
+                _context.UserGenres.AddRange(userGenres);
+                await _context.SaveChangesAsync();
+            }
+
             var jwt = JwtUtils.GenerateToken(_jwtSettings, user);
             return Ok(new { Token = jwt });
         }
+
 
         [HttpPost("login")]
         public async Task<IActionResult> Login([FromBody] LoginRequest request)
@@ -67,7 +87,10 @@ namespace book_hub_ws.Controllers
         public async Task<IActionResult> GetProfile()
         {
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            var user = await _context.Users.FindAsync(int.Parse(userId));
+            var user = await _context.Users
+                .Include(u => u.UserGenres)
+                .ThenInclude(ug => ug.Genre)
+                .FirstOrDefaultAsync(u => u.UserId == int.Parse(userId));
 
             if (user == null)
             {
@@ -81,7 +104,8 @@ namespace book_hub_ws.Controllers
                 Surname = user.Surname,
                 Email = user.Email,
                 PhoneNumber = user.PhoneNumber,
-                Community = user.Community
+                Community = user.Community,
+                FavoriteGenres = user.UserGenres.Select(ug => ug.GenreId).ToList()  
             };
 
             return Ok(profile);
@@ -94,8 +118,15 @@ namespace book_hub_ws.Controllers
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
 
-            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            var user = await _context.Users.FindAsync(int.Parse(userId));
+            var userId = HttpContext.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (userId == null)
+            {
+                return Unauthorized("User ID not found in token");
+            }
+
+            var user = await _context.Users
+                .Include(u => u.UserGenres)
+                .FirstOrDefaultAsync(u => u.UserId == int.Parse(userId));
 
             if (user == null)
             {
@@ -109,10 +140,15 @@ namespace book_hub_ws.Controllers
             user.PhoneNumber = request.PhoneNumber;
             user.Community = request.Community;
 
-            _context.Users.Update(user);
+            user.UserGenres.Clear();
+            foreach (var genreId in request.FavoriteGenres)
+            {
+                user.UserGenres.Add(new UserGenre { UserId = user.UserId, GenreId = genreId });
+            }
+
             await _context.SaveChangesAsync();
 
-            return NoContent();
+            return Ok();
         }
 
         [HttpPut("change-password")]

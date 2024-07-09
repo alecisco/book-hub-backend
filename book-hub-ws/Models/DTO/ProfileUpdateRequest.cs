@@ -13,4 +13,6 @@ public class ProfileUpdateRequest
     [Required]
     public string PhoneNumber { get; set; }
     public string Community { get; set; }
+
+    public List<int> FavoriteGenres { get; set; }
 }

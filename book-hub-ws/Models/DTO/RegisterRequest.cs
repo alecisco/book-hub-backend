@@ -23,4 +23,6 @@ public class RegisterRequest
     public string Password { get; set; }
 
     public string? Community { get; set; }
+
+    public List<int> FavoriteGenres { get; set; }
 }
